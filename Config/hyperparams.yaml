@@ -1,0 +1,87 @@
+# Hyperparameters for YOLOv8 Classification - Structural Health Monitoring
+# Optimized for multi-class concrete damage classification (Deck/Pavement/Wall x Cracked/Uncracked)
+
+# Model Configuration
+model:
+  base_weights: 'yolov8n-cls.pt'  # Pre-trained classification weights (nano)
+  # Options: yolov8n-cls.pt (fastest), yolov8s-cls.pt, yolov8m-cls.pt (most accurate)
+  pretrained: true                # Use ImageNet pre-trained weights
+  task: 'classification'          # Explicit task definition
+
+# Training Parameters
+training:
+  epochs: 150                    # Maximum training epochs (classification converges faster)
+  imgsz: 224                      # Standard classification input size (224x224)
+  batch: 64                       # Larger batch for classification (fits more in memory)
+  patience: 20                     # Early stopping patience
+  device: '0'                     # GPU device ID
+  workers: 8                      # Dataloader workers
+  cache: true                     # Cache images in RAM for faster training
+  single_cls: false              # Multi-class classification
+
+# Optimizer Settings
+optimizer:
+  name: 'AdamW'                   # Optimizer type
+  lr0: 0.001                      # Initial learning rate
+  lrf: 0.01                       # Final LR = lr0 * lrf
+  momentum: 0.937                 # SGD momentum / Adam beta1
+  weight_decay: 0.0005            # Weight decay
+  warmup_epochs: 3.0              # Warmup epochs
+  warmup_momentum: 0.8            # Warmup initial momentum
+
+# Augmentation for Concrete Images
+augmentation:
+  hsv_h: 0.015                    # HSV Hue
+  hsv_s: 0.7                      # HSV Saturation
+  hsv_v: 0.4                      # HSV Value
+  degrees: 15.0                    # Rotation (+/- degrees) - important for angled photos
+  translate: 0.1                   # Translation
+  scale: 0.5                       # Scale
+  shear: 2.0                       # Shear
+  flipud: 0.0                      # Vertical flip (usually disabled for structural)
+  fliplr: 0.5                     # Horizontal flip
+  mosaic: 0.0                     # DISABLED for classification (only for detection)
+  mixup: 0.1                      # MixUp augmentation
+  auto_augment: 'randaugment'     # Auto augmentation policy
+  erasing: 0.4                     # Random erasing
+
+# Loss Function (handle class imbalance)
+loss:
+  label_smoothing: 0.1            # Label smoothing for regularization
+  # Class weights for imbalanced dataset (cracked ~1500, uncracked ~10000)
+  # Higher weight for cracked classes to balance learning
+  class_weights: [3.5, 0.5, 3.5, 0.5, 3.5, 0.5]
+  # [deck_cracked, deck_uncracked, pavement_cracked, pavement_uncracked, wall_cracked, wall_uncracked]
+
+# Validation & Logging
+validation:
+  val_interval: 1                  # Validate every epoch
+  save_period: 10                 # Save checkpoint every N epochs
+  project: 'runs/classify'         # Output directory
+  name: 'shm_classification'      # Experiment name
+  exist_ok: false                 # Overwrite existing
+  verbose: true                    # Verbose output
+  plots: true                      # Generate training plots
+  # Confusion matrix
+  conf_matrix: true                # Generate confusion matrix
+
+# Structural Health Monitoring Specific
+shm:
+  structure_types: [deck, pavement, wall]
+  conditions: [cracked, uncracked]
+  # Safety thresholds per structure type (crack severity in mm)
+  safety_thresholds:
+    deck:
+      critical_crack_width: 0.3
+      max_allowable: 0.5
+    pavement:
+      critical_crack_width: 6.0
+      max_allowable: 12.0
+    wall:
+      critical_crack_width: 0.3
+      max_allowable: 1.0
+  # Camera defaults for physical measurement
+  default_distance_mm: 2000        # 2 meters
+  default_focal_length_px: 800
+  # Minimum confidence for structural assessment
+  min_confidence: 0.75
