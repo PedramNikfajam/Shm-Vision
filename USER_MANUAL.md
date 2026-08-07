@@ -67,6 +67,8 @@ Launch the application with Streamlit:
 
 ```bash
 streamlit run app.py
+or
+python -m streamlit run app.py
 ```
 
 The dashboard will automatically open in your browser at:
