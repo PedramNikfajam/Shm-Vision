@@ -2,7 +2,13 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+*.pt
+*.onnx
+*.engine
+*.pth
+runs/
+data/
+!assets/*.png
 # C extensions
 *.so
 
