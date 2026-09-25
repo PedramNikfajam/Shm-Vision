@@ -1,5 +1,10 @@
 # SHM Vision — User Manual / دفترچه راهنمای کاربری
-**Version 1.0 | 2026-08-07**
+**Version 2.0 | 2026-09-26**
+
+> **v2.0 changed how results are reported.** Confidence no longer grades severity,
+> sub-resolution cracks are reported as `UNRESOLVED` instead of a number, and crack
+> widths are sub-pixel. See section 10 (*Understanding Results*) and the
+> [v2.0 release notes](https://github.com/PedramNikfajam/Shm-Vision/releases/tag/v2.0).
 
 ---
 
@@ -182,10 +187,40 @@ focal_px = (1920 * 50) / 36 = 2667 px
 | COLLAPSE_RISK | 0.00 | Emergency — evacuate area |
 | UNCERTAIN | 0.90 | Manual inspection required |
 
+Severity grades **damage magnitude, not classifier confidence**. A detected crack is
+graded `MINOR` as a conservative baseline; only a trustworthy physical measurement
+can escalate it (`MINOR → MODERATE → SEVERE → CRITICAL → COLLAPSE_RISK`). A
+measurement can never lower the grade below `MINOR`, so measuring a crack will not
+improve its safety factor.
+
+سقف شدت بر اساس **شدت آسیب** تعیین می‌شود، نه میزان اطمینان مدل. ترک شناسایی‌شده در
+ابتدا با سطح `MINOR` ارزیابی می‌شود و فقط اندازه‌گیری فیزیکی معتبر می‌تواند آن را
+تشدید کند. اندازه‌گیری هرگز شدت را کاهش نمی‌دهد.
+
 ### Confidence Score / نمره اطمینان:
-- **> 95%** — High confidence / اطمینان بالا
-- **75-95%** — Medium confidence / اطمینان متوسط
-- **< 75%** — Low confidence — manual check recommended / اطمینان پایین
+| Tier | Range | Meaning |
+|------|-------|---------|
+| **High** | ≥ 85% | Verdict may drive a decision / اطمینان بالا |
+| **Medium** | 75–85% | Verdict usable, verify on site / اطمینان متوسط |
+| **Low** | < 75% | Flagged `UNCERTAIN` — manual check required / اطمینان پایین |
+
+The **Low** tier is exactly the set of predictions that are flagged `UNCERTAIN`: a
+prediction below 75% confidence never receives a clean verdict or a safety factor of
+1.00. The tier is shown next to the confidence figure in the dashboard and included
+in the JSON and CSV exports as `confidence_tier`.
+
+رد آستانه ۷۵٪ دقیقاً همان دسته‌ای است که `UNCERTAIN` اعلام می‌شود.
+
+### Crack width resolution / تفکیک‌پذیری عرض ترک:
+
+If the detected crack is thinner than the imaging blur kernel, the width **cannot**
+be measured at that distance. The dashboard reports this as `UNRESOLVED` rather than
+printing a number, and never uses it for severity. To obtain a real measurement, move
+closer and use the full-resolution image.
+
+اگر ترک از کرنل محو‌شدگی نازک‌تر باشد، عرض آن قابل اندازه‌گیری نیست. سامانه به‌جای
+عدد، وضعیت `UNRESOLVED` را گزارش می‌کند. برای اندازه‌گیری واقعی، نزدیک‌تر شوید و از
+تصویر با بالاترین تفکیک استفاده کنید.
 
 ---
 
@@ -211,26 +246,62 @@ Professional engineering report with:
 ## 12. Troubleshooting / رفع اشکال
 
 ### Issue: "Weights file missing. Running in Simulation Mode"
-**Solution:** Place your `best.pt` or `yolov8n-cls.pt` in the project root or `runs/classify/` directory.
+**Solution:** Simulation Mode returns a **placeholder distribution, not a prediction**.
+Place your `best.pt` in the project root or under `runs/classify/`. The trained
+checkpoint is attached to the
+[v2.0 release](https://github.com/PedramNikfajam/Shm-Vision/releases/tag/v2.0).
+Weights are excluded from git (`.gitignore` excludes `*.pt`), so a fresh clone has
+none until you supply one.
 
-### Issue: Measurement shows unrealistic width (>20mm)
-**Solution:** Check camera calibration parameters. Ensure distance and focal length are correct.
+### Issue: Width reported as `UNRESOLVED`
+**Solution:** The crack is real but thinner than the imaging blur kernel at the current
+distance, so no width can be trusted. Get closer to the surface (≈0.5 m), use the
+full-resolution image, and increase the focal-length figure to match your optics. The
+system deliberately withholds a number here rather than inventing one.
+
+### Issue: Measurement shows an implausible width
+**Solution:** Check the calibration first — `W = px × D / f`. A width far above
+`CRACK_MEASUREMENT["max_plausible_avg_width_mm"]` (50 mm) is rejected as texture or
+shadow. Very wide reported values usually mean the calibration is far too coarse: at
+the default 2 m / 800 px, 1 px = 2.5 mm, which cannot resolve a 0.3 mm wall crack.
+
+### Issue: Severity says `MINOR` even at 99% confidence
+**Solution:** This is intended. Confidence expresses certainty of the *label*, not
+damage magnitude, so a confident detection is graded at the conservative `MINOR`
+baseline and only a valid physical measurement escalates it. See section 10,
+*Understanding Results*.
+
+### Issue: A cracked surface is reported `HEALTHY`
+**Solution:** Be aware of the known model limitation — `deck_cracked` recall is 0.70,
+so roughly 3 in 10 cracked decks are classified as uncracked. Treat a `HEALTHY`
+verdict on a deck as unconfirmed and verify manually. This is a model-capacity issue
+that v2 does not fix.
 
 ### Issue: Crack overlay shows scattered red dots
-**Solution:** This is normal noise from edge detection. The system filters noise but some texture may be highlighted. The main crack will still be visible.
+**Solution:** Small texture fragments can survive filtering. The red fill marks exactly
+the detected crack pixels and the yellow line is the measured centreline; the main
+crack remains the dominant feature.
 
 ### Issue: Low confidence score
-**Solution:** Ensure image is well-lit and focused. Poor lighting or blurry images reduce accuracy.
+**Solution:** Ensure the image is well-lit and in focus, and that it resembles the
+training domain (close-up concrete tiles, per SDNET2018). Below 75% the result is
+flagged `UNCERTAIN` by design.
+
+### Issue: `RuntimeError: Invalid device string: '0'`
+**Solution:** You are on a CPU-only PyTorch install. `--device` now defaults to `auto`,
+which selects CUDA when available and CPU otherwise. You can also pass `--device cpu`
+explicitly.
 
 ### Issue: Stream not connecting
-**Solution:** For RTSP, verify URL format: `rtsp://username:password@ip:port/stream`
+**Solution:** For RTSP, verify the URL format: `rtsp://username:password@ip:port/stream`
 
 ---
 
 ## Contact / تماس
 
-For questions or contributions, please open an issue on GitHub.
+For questions or contributions, please open an issue on GitHub:
+**https://github.com/PedramNikfajam/Shm-Vision**
 
 ---
 
-**SHM Vision Team | 2026**
+**SHM Vision — Pedram Nikfarjam | v2.0 | 2026**
