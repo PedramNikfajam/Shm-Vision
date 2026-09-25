@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="assets/demo_deck_minor.png" width="900" alt="SHM Vision dashboard — deck crack classified as MINOR DAMAGE with the crack centerline traced"/>
-  <br>
 </p>
 
 <p align="center">
