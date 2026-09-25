@@ -247,11 +247,17 @@ Professional engineering report with:
 
 ### Issue: "Weights file missing. Running in Simulation Mode"
 **Solution:** Simulation Mode returns a **placeholder distribution, not a prediction**.
-Place your `best.pt` in the project root or under `runs/classify/`. The trained
-checkpoint is attached to the
-[v2.0 release](https://github.com/PedramNikfajam/Shm-Vision/releases/tag/v2.0).
-Weights are excluded from git (`.gitignore` excludes `*.pt`), so a fresh clone has
-none until you supply one.
+Download the trained checkpoint from the
+[v2.0 release](https://github.com/PedramNikfajam/Shm-Vision/releases/tag/v2.0) and place
+it in the project root or under `runs/classify/`:
+
+```bash
+curl -L -O https://github.com/PedramNikfajam/Shm-Vision/releases/download/v2.0/best.pt
+sha256sum best.pt   # 0fec9340c033b6889b3a66485bcc1ed1bc1765399763c0d125e6051e29b712bb
+```
+
+Weights are excluded from git (`.gitignore` excludes `*.pt`), so a fresh clone has none
+until you download it.
 
 ### Issue: Width reported as `UNRESOLVED`
 **Solution:** The crack is real but thinner than the imaging blur kernel at the current

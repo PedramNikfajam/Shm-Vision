@@ -189,22 +189,39 @@ Model weights are **not committed** (`.gitignore` excludes `*.pt`). Without a we
 file the app starts in **Simulation Mode**, which returns a fixed placeholder
 distribution — the results are *not* model predictions, and the sidebar says so.
 
-Supply weights in either of these ways:
+Download the trained checkpoint attached to the
+[v2.0 release](https://github.com/PedramNikfajam/Shm-Vision/releases/tag/v2.0):
 
 ```bash
-# Option A — download the trained checkpoint from the v2.0 release page
-# https://github.com/PedramNikfajam/Shm-Vision/releases/tag/v2.0
-# then place best.pt in either location:
-#   ./best.pt
-#   ./runs/classify/shm_classification/weights/best.pt
+# Download (2,979,464 bytes)
+curl -L -O https://github.com/PedramNikfajam/Shm-Vision/releases/download/v2.0/best.pt
 
-# Option B — use the stock COCO-pretrained classifier to try the pipeline
-# (classes will NOT match; useful only to check the plumbing works)
-curl -L -o yolov8n-cls.pt https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-cls.pt
+# Verify integrity
+sha256sum best.pt
+# 0fec9340c033b6889b3a66485bcc1ed1bc1765399763c0d125e6051e29b712bb
 ```
 
-The sidebar auto-discovers `best.pt` under `runs/` and shows **✅ PyTorch YOLO loaded**
-when it is found. It also has an ONNX toggle for `.onnx` exports.
+Then place it in **either** location — the sidebar auto-discovers both:
+
+```
+./best.pt
+./runs/classify/shm_classification/weights/best.pt
+```
+
+| Property | Value |
+|----------|-------|
+| Architecture | YOLOv8-cls (`yolov8s-cls`, 256 px) |
+| Classes | 6 — `deck_cracked`, `deck_uncracked`, `pavement_cracked`, `pavement_uncracked`, `wall_cracked`, `wall_uncracked` |
+| Training data | SDNET2018, split grouped by surface (no train/test leak) |
+| Top-1 accuracy | 0.8885 on 1363 held-out test images |
+| Calibration | Expected Calibration Error 0.0198 |
+| SHA-256 | `0fec9340c033b6889b3a66485bcc1ed1bc1765399763c0d125e6051e29b712bb` |
+
+> ⚠️ That 0.89 top-1 hides a serious gap: `deck_cracked` recall is only **0.70**. See
+> [Known limitations](#known-limitations) before using this on a real structure.
+
+Prefer ONNX? The sidebar has an **Accelerate via ONNX** toggle that picks up a
+sibling `best.onnx`; export one with `python src/train.py --export --weights best.pt --format onnx`.
 
 ---
 
