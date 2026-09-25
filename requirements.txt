@@ -1,0 +1,48 @@
+# SHM Vision - Structural Health Monitoring System
+# Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core Deep Learning
+ultralytics>=8.0.200          # YOLOv8 framework for classification/detection
+torch>=2.0.0                  # PyTorch deep learning framework
+torchvision>=0.15.0           # Computer vision utilities for PyTorch
+
+# Image Processing
+opencv-python>=4.8.0          # Computer vision and crack measurement
+opencv-contrib-python>=4.8.0  # ximgproc.thinning for crack skeletonization
+Pillow>=10.0.0                # Image manipulation library
+
+# Dashboard (app.py)
+streamlit>=1.30.0             # Web dashboard framework
+plotly>=5.18.0                # Gauge/bar/pie/histogram charts
+reportlab>=4.0.0              # PDF report generation
+
+# Data & Scientific Computing
+numpy>=1.24.0                 # Numerical computing
+pandas>=2.0.0                 # Data manipulation and analysis
+scipy>=1.10.0                 # Scientific computing
+
+# Evaluation (scripts/evaluate.py)
+scikit-learn>=1.3.0           # Confusion matrix, per-class metrics
+matplotlib>=3.7.0             # Confusion matrix rendering
+seaborn>=0.12.0               # Statistical visualization
+
+# Configuration & Utilities
+PyYAML>=6.0                   # YAML configuration file parsing
+tqdm>=4.65.0                  # Progress bars
+
+# Deployment & Export
+onnx>=1.14.0                  # ONNX model export
+onnxruntime>=1.15.0           # ONNX runtime inference
+# openvino>=2023.0.0          # Intel OpenVINO optimization (optional)
+# tensorrt>=8.6.0             # NVIDIA TensorRT optimization (optional)
+
+# Testing
+pytest>=7.4.0                 # Unit testing framework
+pytest-cov>=4.1.0             # Test coverage
+
+# Development (optional)
+# jupyter>=1.0.0              # Notebooks for experimentation
+# wandb>=0.15.0               # Experiment tracking (optional)
+# tensorboard>=2.13.0         # Visualization (optional)
+# mkdocs>=1.5.0               # Documentation generator (optional)

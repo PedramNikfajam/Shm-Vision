@@ -1,0 +1,100 @@
+# Hyperparameters for YOLOv8 Classification - Structural Health Monitoring
+# Optimized for multi-class concrete damage classification (Deck/Pavement/Wall x Cracked/Uncracked)
+
+# Model Configuration
+model:
+  base_weights: 'yolov8s-cls.pt'  # Small: more capacity than nano for hairline cracks
+  # Options: yolov8n-cls.pt (fastest), yolov8s-cls.pt, yolov8m-cls.pt (most accurate)
+  pretrained: true                # Use ImageNet pre-trained weights
+  task: 'classification'          # Explicit task definition
+
+# Training Parameters
+training:
+  epochs: 150                    # Maximum training epochs (classification converges faster)
+  imgsz: 256                      # Native SDNET tile size; 320+ only up-samples (no new detail, slower epochs)
+  batch: 64                       # Larger batch for classification (fits more in memory)
+  patience: 30                     # Early stopping patience: give noisy val-loss spikes room to recover
+  device: 'auto'                  # 'auto' = GPU if CUDA available, else CPU
+  workers: 'auto'                 # 'auto' = 0 on Windows, 4 on Linux/Kaggle
+  cache: true                     # Cache images in RAM (~180MB for 16k images)
+  single_cls: false              # Multi-class classification
+
+# Optimizer Settings
+optimizer:
+  name: 'AdamW'                   # Optimizer type
+  lr0: 0.001                      # Initial learning rate
+  lrf: 0.01                       # Final LR = lr0 * lrf
+  momentum: 0.937                 # SGD momentum / Adam beta1
+  weight_decay: 0.0005            # Weight decay
+  warmup_epochs: 3.0              # Warmup epochs
+  warmup_momentum: 0.8            # Warmup initial momentum
+  cos_lr: true                    # Cosine decay: smoother tail than linear, fewer late spikes
+
+# Augmentation for Concrete Images
+augmentation:
+  hsv_h: 0.015                    # HSV Hue
+  hsv_s: 0.7                      # HSV Saturation
+  hsv_v: 0.4                      # HSV Value
+  degrees: 15.0                    # Rotation (+/- degrees) - important for angled photos
+  translate: 0.1                   # Translation
+  scale: 0.5                       # Scale
+  shear: 2.0                       # Shear
+  flipud: 0.5                      # Vertical flip: cracks have no canonical up-direction
+  fliplr: 0.5                     # Horizontal flip
+  mixup: 0.1                      # MixUp augmentation
+  # Erasing/rand-augment can wipe out the thin crack texture that
+  # distinguishes cracked/uncracked; keep both low for this domain.
+  erasing: 0.2                     # Random erasing (was 0.4)
+  auto_augment: null               # RandAugment distorts subtle crack cues
+
+# NOTE on retraining after the 2026-09 Kaggle run (top1=0.778, best epoch 7/27):
+#   * deck_cracked recall was 0.56 (hairline misses -> predicted uncracked):
+#     keep imgsz at SDNET-native 256 (no fake detail from upscaling) and rely
+#     on flips + longer patience instead; capacity (s-cls) is the lever.
+#   * Split data by SOURCE (video/session), not per-image: near-duplicate
+#     frames of the same surface across train/val inflate test accuracy
+#     while real-world (out-of-distribution) photos fail.
+#   * z_other must be oversampled to match the structural classes or the
+#     model almost never predicts it (recall 0.275 when trained at ~62%
+#     of the other classes' budget).
+
+# Loss Function (handle class imbalance)
+loss:
+  label_smoothing: 0.05            # Lower than 0.1: keep logit margins for subtle cracked/uncracked cues
+  # NOTE: current dataset is already balanced (1600-3200 imgs/class, see
+  # data/processed/dataset_statistics.json) -- class weights unnecessary.
+  # Ultralytics classify mode has no `class_weights` arg either; balance
+  # via oversampling in scripts/prepare_data.py if future data skews.
+
+# Validation & Logging
+validation:
+  val_interval: 1                  # Validate every epoch
+  save_period: 10                 # Save checkpoint every N epochs
+  project: 'runs/classify'         # Output directory
+  name: 'shm_classification'      # Experiment name
+  exist_ok: false                 # Overwrite existing
+  verbose: true                    # Verbose output
+  plots: true                      # Generate training plots
+  # Confusion matrix
+  conf_matrix: true                # Generate confusion matrix
+
+# Structural Health Monitoring Specific
+shm:
+  structure_types: [deck, pavement, wall]
+  conditions: [cracked, uncracked]
+  # Safety thresholds per structure type (crack severity in mm)
+  safety_thresholds:
+    deck:
+      critical_crack_width: 0.3
+      max_allowable: 0.5
+    pavement:
+      critical_crack_width: 6.0
+      max_allowable: 12.0
+    wall:
+      critical_crack_width: 0.3
+      max_allowable: 1.0
+  # Camera defaults for physical measurement
+  default_distance_mm: 2000        # 2 meters
+  default_focal_length_px: 800
+  # Minimum confidence for structural assessment
+  min_confidence: 0.75

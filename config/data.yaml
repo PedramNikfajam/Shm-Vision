@@ -1,0 +1,77 @@
+# AI-Driven Civil Infrastructure Health Monitoring - Classification Dataset Configuration
+# Dataset Structure for 6-Class Classification (3 Structure Types x 2 Conditions)
+#
+# Instructions:
+# 1. Organize your raw data as follows:
+#    data/raw/
+#    ├── deck/
+#    │   ├── cracked/          (1500+ images)
+#    │   └── uncracked/        (10000+ images)
+#    ├── pavements/
+#    │   ├── cracked/          (1500+ images)
+#    │   └── uncracked/        (10000+ images)
+#    └── walls/
+#        ├── cracked/          (1500+ images)
+#        └── uncracked/        (10000+ images)
+#
+# 2. Run: python scripts/prepare_data.py --raw data/raw/ --output data/processed/
+# 3. Then run training with: python src/train.py --data data/processed
+
+# Dataset paths (relative to project root or absolute)
+path: ../data/processed  # Dataset root directory
+
+# Train/Val/Test splits (folders created by prepare_data.py)
+train: train
+val: val
+test: test
+
+# Number of classes
+nc: 6
+
+# Class names - Multi-class: Structure Type + Condition
+names:
+  0: deck_cracked      # Concrete deck with cracks
+  1: deck_uncracked   # Healthy concrete deck
+  2: pavement_cracked # Pavement/road with cracks
+  3: pavement_uncracked # Healthy pavement/road
+  4: wall_cracked     # Wall with cracks
+  5: wall_uncracked   # Healthy wall
+
+# Class descriptions for documentation
+descriptions:
+  deck_cracked: >
+    Structural cracks in concrete bridge decks, parking garages, or floor slabs.
+    Critical for load-bearing capacity assessment.
+  deck_uncracked: >
+    Healthy concrete deck surface without visible cracks.
+    Indicates good structural condition.
+  pavement_cracked: >
+    Cracks in asphalt or concrete pavements, roads, sidewalks.
+    Includes longitudinal, transverse, and alligator cracks.
+  pavement_uncracked: >
+    Healthy pavement surface without visible distress.
+    Good riding quality and structural integrity.
+  wall_cracked: >
+    Cracks in concrete or masonry walls.
+    May indicate settlement, thermal stress, or structural overload.
+  wall_uncracked: >
+    Healthy wall surface without visible cracks.
+    Indicates stable structural condition.
+
+# Dataset metadata
+metadata:
+  project: >
+    SHM Vision - Structural Health Monitoring Classification
+    (Deck / Pavement / Wall) x (Cracked / Uncracked)
+  version: '2.0.0'
+  created: '2026-08-04'
+  image_formats: ['jpg', 'jpeg', 'png']
+  annotation_format: folder-based (YOLO classification)
+  total_classes: 6
+  structure_types: [deck, pavement, wall]
+  conditions: [cracked, uncracked]
+
+# Class imbalance handling notes
+# The dataset is imbalanced (cracked: ~1500, uncracked: ~10000 per class)
+# Use weighted loss or oversampling during training
+# See config/hyperparams.yaml for class weights

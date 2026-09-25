@@ -1,0 +1,17 @@
+# Normalize line endings so Windows checkouts don't produce whole-file diffs.
+* text=auto eol=lf
+
+*.py   text diff=python
+*.md   text
+*.yaml text
+*.yml  text
+*.txt  text
+*.ipynb text
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.pdf  binary
+*.pt   binary
+*.onnx binary

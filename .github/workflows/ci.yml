@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The measurement pipeline and severity ladders are pure logic and must
+        # hold everywhere; the full stack is only exercised on 3.10+.
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Only what the test suite needs. Torch/ultralytics are deliberately
+          # excluded: tests/test_core.py must stay runnable without the 2 GB
+          # deep-learning stack, which is what makes it a useful CI gate.
+          pip install numpy opencv-python-headless pytest
+
+      - name: Run core test suite (pytest)
+        run: python -m pytest tests/test_core.py -q
+
+      - name: Run stdlib fallback runner
+        # Mirrors the same checks with no pytest dependency; must agree.
+        run: python tests/run_all.py

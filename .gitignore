@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Model weights (too large for git)
+*.pt
+*.onnx
+*.engine
+*.pth
+runs/
+
+# Data
+data/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+!assets/*.png
+!assets/*.jpg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
